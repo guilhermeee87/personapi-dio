@@ -8,11 +8,9 @@ import one.digitalinnovation.personapi.exception.PersonNotFoundException;
 import one.digitalinnovation.personapi.repository.PersonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,10 +26,7 @@ public class PersonService {
     public MessageResponseDTO createPerson(@Valid PersonDTO personDTO){
         Person personToSave = personMapper.toModel(personDTO);
         Person savedPerson = personRepository.save(personToSave);
-        return MessageResponseDTO
-                .builder()
-                .message("Created person with ID "+ savedPerson.getId())
-                .build();
+        return createMessageResponse(savedPerson.getId(), "Updated person with id ");
     }
 
     public List<PersonDTO> listAll() {
@@ -46,13 +41,30 @@ public class PersonService {
         return personMapper.toDTO(person);
     }
 
+
+    public void delete(Long id) throws PersonNotFoundException {
+        Person person = verifyIfExists(id);
+        personRepository.deleteById(id);
+    }
+
+    public MessageResponseDTO updatedById(Long id, PersonDTO personDTO) throws PersonNotFoundException {
+
+        verifyIfExists(id);
+
+        Person personToSave = personMapper.toModel(personDTO);
+        Person updatedPerson = personRepository.save(personToSave);
+        return createMessageResponse(updatedPerson.getId(), "Updated person with id " + id);
+    }
+
     private Person verifyIfExists(Long id) throws PersonNotFoundException {
         return personRepository.findById(id)
                 .orElseThrow(() -> new PersonNotFoundException(id));
     }
 
-    public void delete(Long id) throws PersonNotFoundException {
-        Person person = verifyIfExists(id);
-        personRepository.deleteById(id);
+    private MessageResponseDTO createMessageResponse(Long id, String message) {
+        return MessageResponseDTO
+                .builder()
+                .message(message + id)
+                .build();
     }
 }
